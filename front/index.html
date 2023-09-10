@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+  <title>ToDo List</title>
+</head>
+
+<style>
+
+    body {
+      background-color: #f5f5f5;
+    }
+
+    form {
+        margin-bottom: 20px;
+    }
+
+    .container-flex {
+      margin-top: 20px;
+      margin-bottom: 20px;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 5px;
+      box-shadow: 0px 0px 5px 0px rgba(0,0,0,0.75);
+    }
+   
+  </style>
+
+<body class="d-flex justify-content-center align-items-center">
+    <div class="container-flex">
+      <h1 class="mb-4">Nova Tarefa</h1>
+   
+      <form class="row g-3">
+        <div class="mb-3">
+          <label for="exampleFormControlInput1" class="form-label">Titulo</label>
+          <input type="string" class="form-control" id="exampleFormControlInput1" placeholder="Titulo da nova tarefa">
+        </div>
+        <div class="mb-3">
+          <label for="exampleFormControlTextarea1" class="form-label">Descrição</label>
+          <textarea class="form-control" id="exampleFormControlTextarea1" rows="3"></textarea>
+        </div>
+
+        <div class="col-12">
+          <button type="submit" class="btn btn-primary">Criar</button>
+        </div>
+      </form>
+
+
+   <!--  <h1 class="mb-4">Lista de Tarefas </h1> -->
+    <ul class="list-group">
+      <!-- Aqui você pode iterar sobre as tarefas da API e criar os itens da lista -->
+      <!-- Exemplo: -->
+      <!-- <li class="list-group-item">Tarefa 1</li> -->
+      <!-- <li class="list-group-item">Tarefa 2</li> -->
+      <!-- ... -->
+    </ul>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.5.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
+<script>
+
+  //captura evento submit do form e chama função para criar tarefa
+  document.querySelector('form').addEventListener('submit', function(event) {
+    event.preventDefault();
+    createTask();
+  });
+
+
+  //função para criar tarefa
+  function createTask() {
+    //captura os valores dos inputs
+    let title = document.querySelector('#exampleFormControlInput1').value;
+    let description = document.querySelector('#exampleFormControlTextarea1').value;
+
+    if(!title || !description) {
+      Swal.fire('Preencha todos os campos!')
+      return;
+    }
+
+    //cria objeto com os valores dos inputs
+    let task = {
+      title: title,
+      description: description
+    }
+
+    //chama função para enviar tarefa para API
+    sendTask(task);
+  }
+
+
+  //função para enviar tarefa para API
+  function sendTask(task) {
+    //cria requisição para API
+    let request = new XMLHttpRequest();
+
+
+    //abre requisição para API
+    request.open('POST', 'http://localhost:3000/tasks', true);
+
+    //seta cabeçalho da requisição
+    request.setRequestHeader('Content-Type', 'application/json');
+    
+    //header authorization
+    request.setRequestHeader('Authorization', 'seu_token');
+
+    //envia requisição para API
+    request.send(JSON.stringify(task));
+
+    //captura evento de mudança de estado da requisição
+    request.onreadystatechange = function() {
+      //verifica se a requisição foi concluída
+      if (request.readyState == 4) {
+        //verifica se a requisição foi bem sucedida
+        if (request.status == 201) {
+          //chama função para atualizar lista de tarefas
+         // getTasks();
+         Swal.fire('Tarefa criada com sucesso!')
+         // limpa os campos
+          document.querySelector('#exampleFormControlInput1').value = '';
+          document.querySelector('#exampleFormControlTextarea1').value = '';
+          // getTasks();
+        }else{
+          // pega msg da api
+          let msg = JSON.parse(request.responseText);
+          // mostra msg de erro
+          Swal.fire(msg.message);
+        }
+      }
+    }
+  }
+
+
+</script>
