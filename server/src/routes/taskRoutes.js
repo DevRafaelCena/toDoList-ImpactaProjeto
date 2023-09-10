@@ -5,6 +5,8 @@ const taskController = require('../controllers/taskController');
 // Rota para criar uma nova tarefa
 router.post('/tasks', taskController.createTask);
 
+router.get('/tasks', taskController.getAllTasks);
+
 
 
 module.exports = router;

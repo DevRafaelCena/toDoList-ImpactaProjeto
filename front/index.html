@@ -50,14 +50,17 @@
       </form>
 
 
-   <!--  <h1 class="mb-4">Lista de Tarefas </h1> -->
-    <ul class="list-group">
-      <!-- Aqui você pode iterar sobre as tarefas da API e criar os itens da lista -->
-      <!-- Exemplo: -->
-      <!-- <li class="list-group-item">Tarefa 1</li> -->
-      <!-- <li class="list-group-item">Tarefa 2</li> -->
-      <!-- ... -->
-    </ul>
+    <h1 class="mb-4">Lista de Tarefas </h1> 
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th scope="col">Titulo</th>
+          <th scope="col">Descrição</th>
+          <th scope="col">Ações</th>
+        </tr>
+      </thead>
+      <tbody id="tasks">
+      </tbody>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.5.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -79,7 +82,7 @@
     let title = document.querySelector('#exampleFormControlInput1').value;
     let description = document.querySelector('#exampleFormControlTextarea1').value;
 
-    if(!title || !description) {
+    if(!title.trim() || !description.trim()) {
       Swal.fire('Preencha todos os campos!')
       return;
     }
@@ -125,7 +128,7 @@
          // limpa os campos
           document.querySelector('#exampleFormControlInput1').value = '';
           document.querySelector('#exampleFormControlTextarea1').value = '';
-          // getTasks();
+          getTasks();
         }else{
           // pega msg da api
           let msg = JSON.parse(request.responseText);
@@ -136,5 +139,40 @@
     }
   }
 
+  async function getTasks() {
+  try {
+    const response = await fetch('http://localhost:3000/tasks', {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'seu_token' // Replace with your actual token
+      }
+    });
+
+    if (response.status === 200) {
+      const tasks = await response.json();
+      const tbody = document.querySelector('#tasks');
+      tbody.innerHTML = '';
+
+      tasks.forEach(task => {
+        const row = tbody.insertRow();
+        const title = row.insertCell();
+        const description = row.insertCell();
+        const actions = row.insertCell();
+
+        title.innerHTML = task.title;
+        description.innerHTML = task.description;
+        //actions.innerHTML = `<button class="btn btn-danger" onclick="deleteTask(${task.id})">Excluir</button>`;
+      });
+    } else {
+      const msg = await response.json();
+      Swal.fire(msg.message);
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    Swal.fire('Erro ao buscar as tarefas. Verifique a conexão com a API.');
+  }
+}
+
+getTasks()
 
 </script>
