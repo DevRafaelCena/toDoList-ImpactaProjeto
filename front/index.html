@@ -7,6 +7,13 @@
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.print.min.js"></script>
+  <script src="https://cdn.datatables.net/plug-ins/1.10.22/i18n/Portuguese-Brasil.json"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/css/all.min.css" integrity="sha512-m29wG+He6xt2b4xLzRo2PjoD3z4ts1qZVp5jlLq5p/8i5bhWw2kFvT3VG+h7/gm4Vncd4qjoChWpX/EnO6b6FA==" crossorigin="anonymous" />
+
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
   <title>ToDo List</title>
 </head>
@@ -56,9 +63,10 @@
 
 
     <h1 class="mb-4">Lista de Tarefas </h1> 
-    <table class="table table-striped">
+    <table id="taskTable" class="table table-striped">
       <thead>
         <tr>
+          <th scope="col">ID</th>
           <th scope="col">Titulo</th>
           <th scope="col">Descrição</th>
           <th scope="col">Ações</th>
@@ -126,14 +134,18 @@
       //verifica se a requisição foi concluída
       if (request.readyState == 4) {
         //verifica se a requisição foi bem sucedida
-        if (request.status == 201) {
-          //chama função para atualizar lista de tarefas
-         // getTasks();
+        if (request.status == 201) {        
          Swal.fire('Tarefa criada com sucesso!')
          // limpa os campos
           document.querySelector('#exampleFormControlInput1').value = '';
           document.querySelector('#exampleFormControlTextarea1').value = '';
-          getTasks();
+          if ($.fn.DataTable.isDataTable('#taskTable')) {
+            $('#taskTable').DataTable().ajax.reload();
+          } else {
+            // Inicialize o DataTables aqui, se ainda não estiver inicializado
+            $('#taskTable').dataTable()
+          }
+
         }else{
           // pega msg da api
           let msg = JSON.parse(request.responseText);
@@ -144,40 +156,45 @@
     }
   }
 
-  async function getTasks() {
-  try {
-    const response = await fetch('http://localhost:3000/tasks', {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'seu_token' // Replace with your actual token
-      }
+  $(document).ready(function() {
+    $('#taskTable').dataTable({
+        "bPaginate": true,
+        "bLengthChange": false,
+        "bFilter": true,
+        "bInfo": false,
+        "pageLength": 5,
+        "bAutoWidth": false,
+        "language": {
+          "url": "//cdn.datatables.net/plug-ins/1.10.22/i18n/Portuguese-Brasil.json",
+          "oPaginate": {
+            "sFirst": "Primeira", // Altere para o texto desejado para "First"
+            "sPrevious": "Anterior", // Altere para o texto desejado para "Previous"
+            "sNext": "Próxima", // Altere para o texto desejado para "Next"
+            "sLast": "Última"
+          },
+          "sSearch": "Pesquisar" // Altere para o texto desejado para "Search"
+        },
+        "ajax": {
+        "url": "http://localhost:3000/tasks", // Substitua pela URL da sua API
+        "type": "GET", // Método HTTP usado para buscar dados (GET no seu caso)
+        "headers": {
+          "Authorization": "seu_token" // Substitua pelo seu token de autorização
+        },
+        "dataSrc": "" // Define o nome do campo que contém os dados no JSON retornado pela API
+      },
+      "columns": [
+        { "data": "id", "title": "ID"},
+        { "data": "title", "title": "Título" },
+        { "data": "description", "title": "Descrição" },
+        // botoes de editar , excluir, finalizar
+        { "data": null, "title": "Ações", "render": function (data, type, row) {
+          return '<button type="button" class="btn btn-primary" onclick="editTask('+data.id+')">Editar</button> <button type="button" class="btn btn-danger" onclick="deleteTask('+data.id+')">Excluir</button> <button type="button" class="btn btn-success" onclick="finishTask('+data.id+')">Finalizar</button>';
+        }}
+      ],
+      "order": [[0, 'desc']]
+
+
     });
-
-    if (response.status === 200) {
-      const tasks = await response.json();
-      const tbody = document.querySelector('#tasks');
-      tbody.innerHTML = '';
-
-      tasks.forEach(task => {
-        const row = tbody.insertRow();
-        const title = row.insertCell();
-        const description = row.insertCell();
-        const actions = row.insertCell();
-
-        title.innerHTML = task.title;
-        description.innerHTML = task.description;
-        //actions.innerHTML = `<button class="btn btn-danger" onclick="deleteTask(${task.id})">Excluir</button>`;
-      });
-    } else {
-      const msg = await response.json();
-      Swal.fire(msg.message);
-    }
-  } catch (error) {
-    console.error('Error:', error);
-    Swal.fire('Erro ao buscar as tarefas. Verifique a conexão com a API.');
-  }
-}
-
-getTasks()
+});
 
 </script>

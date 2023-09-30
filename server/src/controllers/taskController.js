@@ -28,7 +28,9 @@ module.exports = {
 
   getAllTasks: async (req, res) => {
     try {
-      const tasks = await Task.findAll();
+
+      //obter todas as tarefas ordenada por id de forma decrescente
+      const tasks = await Task.findAll({ order: [['id', 'DESC']] });
       res.json(tasks);
     } catch (error) {
       console.error('Erro ao obter tarefas:', error);
