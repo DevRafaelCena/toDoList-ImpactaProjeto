@@ -197,4 +197,67 @@
     });
 });
 
+function deleteTask(idTask){
+
+  //verificar se o usuário tem certeza que deseja excluir a tarefa
+
+  Swal.fire({
+    title: 'Você tem certeza?',
+    text: "Você não poderá reverter isso!",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#3085d6',
+    confirmButtonText: 'Sim, excluir!',
+    cancelButtonText: 'Cancelar'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      //cria requisição para API
+      let request = new XMLHttpRequest();
+
+      //abre requisição para API
+      request.open('DELETE', 'http://localhost:3000/tasks/'+idTask, true);
+
+      //seta cabeçalho da requisição
+      request.setRequestHeader('Content-Type', 'application/json');
+      
+      //header authorization
+      request.setRequestHeader('Authorization', 'seu_token');
+
+      //envia requisição para API
+      request.send();
+
+      //captura evento de mudança de estado da requisição
+      request.onreadystatechange = function() {
+        //verifica se a requisição foi concluída
+        if (request.readyState == 4) {
+          //verifica se a requisição foi bem sucedida
+          if (request.status == 204) {        
+            Swal.fire(
+              'Excluído!',
+              'Sua tarefa foi excluída.',
+              'success'
+            )
+            if ($.fn.DataTable.isDataTable('#taskTable'))
+            {
+              $('#taskTable').DataTable().ajax.reload();
+            } else {
+              // Inicialize o DataTables aqui, se ainda não estiver inicializado
+              $('#taskTable').dataTable()
+            }
+
+          }else{
+            // pega msg da api
+            let msg = JSON.parse(request.responseText);
+            // mostra msg de erro
+            Swal.fire(msg.message);
+          }
+
+    }}
+
+  }})    
+
+
+}
+
 </script>
