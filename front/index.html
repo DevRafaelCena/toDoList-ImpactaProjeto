@@ -45,6 +45,10 @@
       <button type="button" class="btn btn-primary" data-toggle="collapse" data-target="#formulario">Nova Tarefa</button>
       <div id="formulario" class="collapse">
       <form class="row g-3" style="margin-top: 10px;">
+
+        <!-- input hidden com id da tarefa quando for editar-->
+        <input type="hidden" id="idTask" value="">
+
         <div class="mb-3">
           <label for="exampleFormControlInput1" class="form-label">Titulo</label>
           <input type="string" class="form-control" id="exampleFormControlInput1" placeholder="Titulo da nova tarefa">
@@ -55,7 +59,11 @@
         </div>
 
         <div class="col-12">
-          <button type="submit" class="btn btn-primary">Criar</button>
+          <button type="submit" class="btn btn-primary">Salvar</button>
+
+          <!-- botão para limpar os form-->
+          <button type="button" class="btn btn-danger" onclick="document.querySelector('#exampleFormControlInput1').value = ''; document.querySelector('#exampleFormControlTextarea1').value = ''; document.querySelector('#idTask').value = '';">Cancelar</button>
+
         </div>
       </form>
     </div>
@@ -95,19 +103,27 @@
     let title = document.querySelector('#exampleFormControlInput1').value;
     let description = document.querySelector('#exampleFormControlTextarea1').value;
 
+    // verifica se é uma edição 
+
+    let idTask = document.querySelector('#idTask').value;
+
     if(!title.trim() || !description.trim()) {
       Swal.fire('Preencha todos os campos!')
       return;
     }
-
     //cria objeto com os valores dos inputs
     let task = {
       title: title,
       description: description
     }
 
-    //chama função para enviar tarefa para API
-    sendTask(task);
+
+    if(idTask){
+      sendEditTask(task, idTask);
+    }else{
+      //chama função para enviar tarefa para API
+      sendTask(task);
+    }
   }
 
 
@@ -115,8 +131,6 @@
   function sendTask(task) {
     //cria requisição para API
     let request = new XMLHttpRequest();
-
-
     //abre requisição para API
     request.open('POST', 'http://localhost:3000/tasks', true);
 
@@ -188,7 +202,7 @@
         { "data": "description", "title": "Descrição" },
         // botoes de editar , excluir, finalizar
         { "data": null, "title": "Ações", "render": function (data, type, row) {
-          return '<button type="button" class="btn btn-primary" onclick="editTask('+data.id+')">Editar</button> <button type="button" class="btn btn-danger" onclick="deleteTask('+data.id+')">Excluir</button> <button type="button" class="btn btn-success" onclick="finishTask('+data.id+')">Finalizar</button>';
+          return '<button type="button" class="btn btn-primary" onclick="editTask(' + data.id + ', \'' + data.title + '\', \'' + data.description + '\')">Editar</button> <button type="button" class="btn btn-danger" onclick="deleteTask(' + data.id + ')">Excluir</button> <button type="button" class="btn btn-success" onclick="finishTask(' + data.id + ')">Finalizar</button>';
         }}
       ],
       "order": [[0, 'desc']]
@@ -200,7 +214,6 @@
 function deleteTask(idTask){
 
   //verificar se o usuário tem certeza que deseja excluir a tarefa
-
   Swal.fire({
     title: 'Você tem certeza?',
     text: "Você não poderá reverter isso!",
@@ -255,7 +268,63 @@ function deleteTask(idTask){
 
     }}
 
-  }})    
+  }})
+}
+
+function editTask(id, title, description){
+
+  // seta os valores do objeto task nos inputs
+  document.querySelector('#exampleFormControlInput1').value = title;
+  document.querySelector('#exampleFormControlTextarea1').value = description;
+  // seta o id da tarefa no input hidden
+  document.querySelector('#idTask').value = id;
+  // mostra o formulario sem jquery
+  document.getElementById("formulario").classList.add("show");
+
+}
+
+function sendEditTask(task, id){
+
+ //cria requisição para API
+ let request = new XMLHttpRequest();
+    //abre requisição para API
+    request.open('PUT', 'http://localhost:3000/tasks/'+id, true);
+    //seta cabeçalho da requisição
+    request.setRequestHeader('Content-Type', 'application/json');
+    
+    //header authorization
+    request.setRequestHeader('Authorization', 'seu_token');
+
+    //envia requisição para API
+    request.send(JSON.stringify(task));
+
+    //captura evento de mudança de estado da requisição
+    request.onreadystatechange = function() {
+      //verifica se a requisição foi concluída
+      if (request.readyState == 4) {
+        //verifica se a requisição foi bem sucedida
+        if (request.status == 201) {        
+         Swal.fire('Tarefa atualizada com sucesso!')
+         // limpa os campos
+          document.querySelector('#exampleFormControlInput1').value = '';
+          document.querySelector('#exampleFormControlTextarea1').value = '';
+          document.querySelector('#idTask').value = '';
+          if ($.fn.DataTable.isDataTable('#taskTable')) {
+            $('#taskTable').DataTable().ajax.reload();
+          } else {
+            // Inicialize o DataTables aqui, se ainda não estiver inicializado
+            $('#taskTable').dataTable()
+          }
+
+        }else{
+          // pega msg da api
+          let msg = JSON.parse(request.responseText);
+          // mostra msg de erro
+          Swal.fire(msg.message);
+          
+        }
+      }
+    }
 
 
 }
