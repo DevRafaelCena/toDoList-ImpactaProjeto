@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "start": "node ./src/index.js",
-    "dev": "nodemon ./src/index.js"
+    "dev": "nodemon ./src/index.js",
+    "lint": "eslint .",
+    "format": "prettier --write ."
   },
   "keywords": [],
   "author": "",
@@ -23,8 +25,10 @@
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.29.0",
     "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prettier": "^5.0.1",
     "eslint-plugin-promise": "^6.1.1",
     "eslint-plugin-standard": "^5.0.0",
-    "nodemon": "^3.0.1"
+    "nodemon": "^3.0.1",
+    "prettier": "^3.0.3"
   }
 }
