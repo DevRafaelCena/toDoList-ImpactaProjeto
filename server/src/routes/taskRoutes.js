@@ -11,4 +11,6 @@ router.delete('/tasks/:id', taskController.deleteOneTask);
 
 router.put('/tasks/:id', taskController.updateOneTask);
 
+router.put('/tasks/done/:id', taskController.markTaskAsDone);
+
 module.exports = router;

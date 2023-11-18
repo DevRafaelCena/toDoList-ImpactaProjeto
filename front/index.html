@@ -37,6 +37,11 @@
       border-radius: 5px;
       box-shadow: 0px 0px 5px 0px rgba(0,0,0,0.75);
     }
+
+    .completed-task {
+      text-decoration: line-through; /* Adiciona um risco na linha */
+      color: #999; /* Cor para uma aparência mais suave da tarefa concluída */
+    }
    
   </style>
 
@@ -200,11 +205,29 @@
         { "data": "id", "title": "ID"},
         { "data": "title", "title": "Título" },
         { "data": "description", "title": "Descrição" },
+        {"data": "completedAt", "title": "Finalizada", "render": function (data, type, row) {
+          if(data){
+            return 'Sim';
+          }else{
+            return 'Não';
+          }
+        }},
         // botoes de editar , excluir, finalizar
         { "data": null, "title": "Ações", "render": function (data, type, row) {
-          return '<button type="button" class="btn btn-primary" onclick="editTask(' + data.id + ', \'' + data.title + '\', \'' + data.description + '\')">Editar</button> <button type="button" class="btn btn-danger" onclick="deleteTask(' + data.id + ')">Excluir</button> <button type="button" class="btn btn-success" onclick="finishTask(' + data.id + ')">Finalizar</button>';
+
+          // se completada não mostra botoes
+          if(data.completedAt){
+            return '';
+          }
+
+          return '<button type="button" class="btn btn-primary" onclick="editTask(' + data.id + ', \'' + data.title + '\', \'' + data.description + '\')">Editar</button> <button type="button" class="btn btn-danger" onclick="deleteTask(' + data.id + ')">Excluir</button> <button type="button" class="btn btn-success" onclick="doneTask(' + data.id + ')">Finalizar</button>';
         }}
       ],
+      "createdRow": function (row, data, dataIndex) {
+      if (data.completedAt) {
+        $(row).addClass('completed-task');
+      }
+    },
       "order": [[0, 'desc']]
 
 
@@ -328,5 +351,66 @@ function sendEditTask(task, id){
 
 
 }
+
+function doneTask(idTask){
+
+//verificar se o usuário tem certeza que deseja excluir a tarefa
+Swal.fire({
+  title: 'Você tem certeza em completar a tarefa?',
+  text: "Você não poderá reverter isso!",
+  icon: 'warning',
+  showCancelButton: true,
+  confirmButtonColor: '#d33',
+  cancelButtonColor: '#3085d6',
+  confirmButtonText: 'Sim, completar!',
+  cancelButtonText: 'Cancelar'
+}).then((result) => {
+  if (result.isConfirmed) {
+    //cria requisição para API
+    let request = new XMLHttpRequest();
+
+    //abre requisição para API
+    request.open('PUT', 'http://localhost:3000/tasks/done/'+idTask , true);
+
+    //seta cabeçalho da requisição
+    request.setRequestHeader('Content-Type', 'application/json');
+    
+    //header authorization
+    request.setRequestHeader('Authorization', 'seu_token');
+
+    //envia requisição para API
+    request.send();
+
+    //captura evento de mudança de estado da requisição
+    request.onreadystatechange = function() {
+      //verifica se a requisição foi concluída
+      if (request.readyState == 4) {
+        //verifica se a requisição foi bem sucedida
+        if (request.status == 201) {        
+          Swal.fire(
+            'Finalizada!',
+            'Sua tarefa foi finalizada.',
+            'success'
+          )
+          if ($.fn.DataTable.isDataTable('#taskTable'))
+          {
+            $('#taskTable').DataTable().ajax.reload();
+          } else {
+            // Inicialize o DataTables aqui, se ainda não estiver inicializado
+            $('#taskTable').dataTable()
+          }
+
+        }else{
+          // pega msg da api
+          let msg = JSON.parse(request.responseText);
+          // mostra msg de erro
+          Swal.fire(msg.message);
+        }
+
+  }}
+
+}})
+}
+
 
 </script>
